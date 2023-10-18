@@ -1,0 +1,90 @@
+/*
+ * Copyright 2023 InfAI (CC SES)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package broker
+
+import (
+	"context"
+	"errors"
+	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
+	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
+	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver"
+	"github.com/patrickmn/go-cache"
+	"sync"
+	"time"
+)
+
+func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (broker *Broker, err error) {
+	receivers, err := receiver.New(ctx, wg, config)
+	if err != nil {
+		return nil, err
+	}
+	c := cache.New(5*time.Minute, 1*time.Minute)
+
+	subscriptions := []model.Subscription{}
+	for _, sub := range config.Subscriptions {
+		sub.DistinctTimeWindowDuration, err = time.ParseDuration(sub.DistinctTimeWindow)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &Broker{
+		config:        config,
+		receivers:     receivers,
+		subscriptions: subscriptions,
+		cache:         c,
+	}, nil
+}
+
+type Broker struct {
+	config        configuration.Config
+	receivers     *receiver.Receivers
+	subscriptions []model.Subscription
+	cache         *cache.Cache
+}
+
+func (this *Broker) Message(msg model.Message) error {
+	wg := sync.WaitGroup{}
+	mux := sync.Mutex{}
+	errorList := []error{}
+	for _, sub := range this.subscriptions {
+		if sub.Match(msg) {
+			if this.IsDistinctMessage(msg, sub) {
+				wg.Add(1)
+				go func(message model.Message, subscription model.Subscription) {
+					defer wg.Done()
+					err := this.send(message, subscription)
+					if err != nil {
+						mux.Lock()
+						defer mux.Unlock()
+						errorList = append(errorList, err)
+					}
+				}(msg, sub)
+			}
+		}
+	}
+	wg.Wait()
+	return errors.Join(errorList...)
+}
+
+func (this *Broker) send(message model.Message, subscription model.Subscription) error {
+	rec, found := this.receivers.Get(subscription.Receiver)
+	if !found {
+		return errors.New("unknown or unconfigured receiver (" + subscription.Receiver + ")")
+	}
+	return rec.Send(message, subscription.AdditionalReceiverInfo)
+}

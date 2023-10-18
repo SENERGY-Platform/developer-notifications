@@ -1,0 +1,5 @@
+{{.Title}}
+From: _ {{.Sender}} _
+{{if .Tags}}Tags: {{range $element := .Tags}} {{$element}} {{end}} {{end}}
+
+{{.Body}}

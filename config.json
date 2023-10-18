@@ -1,0 +1,37 @@
+{
+    "debug": true,
+    "api_port": "8080",
+
+    "slack_webhook_url": "",
+
+    "mail_smtp_host": "",
+    "mail_smtp_port": "",
+    "mail_from": "",
+    "mail_password": "",
+
+    "subscriptions": [
+        {
+            "key": "default",
+            "receiver": "slack",
+            "distinct_time_window": "1h",
+            "filter": [],
+            "additional_receiver_info": ""
+        },
+        {
+            "key": "mail-example",
+            "receiver": "mail",
+            "distinct_time_window": "1h",
+            "filter": [
+                {
+                    "type": "sender",
+                    "value": "will never match because this is an example"
+                },
+                {
+                    "type": "tag",
+                    "value": "error"
+                }
+            ],
+            "additional_receiver_info": "<mail-address-to-be-send-to>"
+        }
+    ]
+}
