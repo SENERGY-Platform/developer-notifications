@@ -20,7 +20,9 @@ import (
 	"context"
 	"errors"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
+	_ "github.com/SENERGY-Platform/developer-notifications/pkg/receiver/mail"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver/registry"
+	_ "github.com/SENERGY-Platform/developer-notifications/pkg/receiver/slack"
 	"log"
 	"sync"
 )

@@ -1,0 +1,30 @@
+[
+    {
+        "key": "slack-warning",
+        "receiver": "slack",
+        "distinct_time_window": "1h",
+        "filter": [
+            {
+                "type": "tag",
+                "value": "warning"
+            }
+        ],
+        "additional_receiver_info": ""
+    },
+    {
+        "key": "mail-warning",
+        "receiver": "mail",
+        "distinct_time_window": "1h",
+        "filter": [
+            {
+                "type": "tag",
+                "value": "warning"
+            },
+            {
+                "type": "tag",
+                "value": "mail"
+            }
+        ],
+        "additional_receiver_info": "example@example.com"
+    }
+]

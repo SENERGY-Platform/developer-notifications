@@ -1,0 +1,27 @@
+[
+    {
+        "key": "disabled",
+        "receiver": "slack",
+        "distinct_time_window": "1h",
+        "filter": [
+            {
+                "type": "sender",
+                "value": "disabled"
+            }
+        ],
+        "additional_receiver_info": "",
+        "disabled": true
+    },
+    {
+        "key": "unknown",
+        "receiver": "unknown",
+        "distinct_time_window": "1h",
+        "filter": [
+            {
+                "type": "sender",
+                "value": "unknown"
+            }
+        ],
+        "additional_receiver_info": ""
+    }
+]

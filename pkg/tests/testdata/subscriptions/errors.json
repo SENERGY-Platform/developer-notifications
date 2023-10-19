@@ -1,0 +1,30 @@
+[
+    {
+        "key": "slack-errors",
+        "receiver": "slack",
+        "distinct_time_window": "1h",
+        "filter": [
+            {
+                "type": "tag",
+                "value": "error"
+            }
+        ],
+        "additional_receiver_info": ""
+    },
+    {
+        "key": "mail-errors",
+        "receiver": "mail",
+        "distinct_time_window": "1h",
+        "filter": [
+            {
+                "type": "tag",
+                "value": "error"
+            },
+            {
+                "type": "tag",
+                "value": "mail"
+            }
+        ],
+        "additional_receiver_info": "example@example.com"
+    }
+]

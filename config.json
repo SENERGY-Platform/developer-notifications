@@ -9,6 +9,8 @@
     "mail_from": "",
     "mail_password": "",
 
+    "subscription_files_dir": "",
+
     "subscriptions": [
         {
             "key": "default",
@@ -31,7 +33,8 @@
                     "value": "error"
                 }
             ],
-            "additional_receiver_info": "<mail-address-to-be-send-to>"
+            "additional_receiver_info": "<mail-address-to-be-send-to>",
+            "disabled": true
         }
     ]
 }

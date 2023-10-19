@@ -36,6 +36,7 @@ type Subscription struct {
 	DistinctTimeWindowDuration time.Duration   `json:"-"`
 	Filter                     []MessageFilter `json:"filter"`                   //subscription is a match if no filter is not a match
 	AdditionalReceiverInfo     string          `json:"additional_receiver_info"` //it is the receivers concern to interpret this field however it needs to
+	Disabled                   bool            `json:"disabled"`
 }
 
 type MessageFilterType string

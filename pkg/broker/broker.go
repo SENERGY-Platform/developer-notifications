@@ -23,6 +23,7 @@ import (
 	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver"
 	"github.com/patrickmn/go-cache"
+	"log"
 	"sync"
 	"time"
 )
@@ -34,20 +35,26 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 	}
 	c := cache.New(5*time.Minute, 1*time.Minute)
 
-	subscriptions := []model.Subscription{}
-	for _, sub := range config.Subscriptions {
-		sub.DistinctTimeWindowDuration, err = time.ParseDuration(sub.DistinctTimeWindow)
-		if err != nil {
-			return nil, err
+	subscriptions, err := LoadSubscriptions(config)
+	if err != nil {
+		return nil, err
+	}
+
+	broker = &Broker{
+		config:    config,
+		receivers: receivers,
+		cache:     c,
+	}
+
+	for _, sub := range subscriptions {
+		if _, ok := receivers.Get(sub.Receiver); !ok {
+			log.Printf("ignore subscription %v to unknown or unconfigured receiver %v", sub.Key, sub.Receiver)
+		} else {
+			broker.subscriptions = append(broker.subscriptions, sub)
 		}
 	}
 
-	return &Broker{
-		config:        config,
-		receivers:     receivers,
-		subscriptions: subscriptions,
-		cache:         c,
-	}, nil
+	return broker, nil
 }
 
 type Broker struct {
@@ -87,4 +94,36 @@ func (this *Broker) send(message model.Message, subscription model.Subscription)
 		return errors.New("unknown or unconfigured receiver (" + subscription.Receiver + ")")
 	}
 	return rec.Send(message, subscription.AdditionalReceiverInfo)
+}
+
+func LoadSubscriptions(config configuration.Config) (subscriptions []model.Subscription, err error) {
+	subscriptions, err = AddSubscriptions(subscriptions, config.Subscriptions)
+	if err != nil {
+		return nil, err
+	}
+	if config.SubscriptionFilesDir != "" && config.SubscriptionFilesDir != "-" {
+		subs, err := LoadSubscriptionFiles(config.SubscriptionFilesDir)
+		if err != nil {
+			return nil, err
+		}
+		subscriptions, err = AddSubscriptions(subscriptions, subs)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return subscriptions, err
+}
+
+func AddSubscriptions(list, added []model.Subscription) (result []model.Subscription, err error) {
+	result = append(result, list...)
+	for _, sub := range added {
+		if !sub.Disabled {
+			sub.DistinctTimeWindowDuration, err = time.ParseDuration(sub.DistinctTimeWindow)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, sub)
+		}
+	}
+	return result, nil
 }

@@ -38,6 +38,10 @@ type Config struct {
 	MailFrom     string `json:"mail_from" config:"secret"`
 	MailPassword string `json:"mail_password" config:"secret"`
 
+	//enables configuration of additional subscriptions without the need to change the config.json
+	//ref pkg/tests/testdata/subscriptions
+	SubscriptionFilesDir string `json:"subscription_files_dir"`
+	
 	Subscriptions []model.Subscription `json:"subscriptions"`
 }
 
