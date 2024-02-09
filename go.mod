@@ -1,6 +1,6 @@
 module github.com/SENERGY-Platform/developer-notifications
 
-go 1.21
+go 1.22
 
 require github.com/patrickmn/go-cache v2.1.0+incompatible
 
