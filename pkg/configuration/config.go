@@ -41,7 +41,7 @@ type Config struct {
 	//enables configuration of additional subscriptions without the need to change the config.json
 	//ref pkg/tests/testdata/subscriptions
 	SubscriptionFilesDir string `json:"subscription_files_dir"`
-	
+
 	Subscriptions []model.Subscription `json:"subscriptions"`
 }
 

@@ -68,9 +68,13 @@ func (this *Broker) Message(msg model.Message) error {
 	wg := sync.WaitGroup{}
 	mux := sync.Mutex{}
 	errorList := []error{}
+	matches := []string{}
+	distinct := []string{}
 	for _, sub := range this.subscriptions {
 		if sub.Match(msg) {
+			matches = append(matches, sub.Key)
 			if this.IsDistinctMessage(msg, sub) {
+				distinct = append(distinct, sub.Key)
 				wg.Add(1)
 				go func(message model.Message, subscription model.Subscription) {
 					defer wg.Done()
@@ -85,7 +89,11 @@ func (this *Broker) Message(msg model.Message) error {
 		}
 	}
 	wg.Wait()
-	return errors.Join(errorList...)
+	err := errors.Join(errorList...)
+	if this.config.Debug {
+		log.Printf("Message(sender=%v,title=%v,tags=%v) result: matches=%#v distinct=%#v error=%v\n", msg.Sender, msg.Title, msg.Tags, matches, distinct, err)
+	}
+	return err
 }
 
 func (this *Broker) send(message model.Message, subscription model.Subscription) error {
@@ -93,7 +101,9 @@ func (this *Broker) send(message model.Message, subscription model.Subscription)
 	if !found {
 		return errors.New("unknown or unconfigured receiver (" + subscription.Receiver + ")")
 	}
-	log.Println("send message to receiver", subscription.Receiver)
+	if this.config.Debug {
+		log.Printf("send message to receiver %v\n", subscription.Receiver)
+	}
 	return rec.Send(message, subscription.AdditionalReceiverInfo)
 }
 
