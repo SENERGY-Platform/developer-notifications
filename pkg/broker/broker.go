@@ -93,6 +93,7 @@ func (this *Broker) send(message model.Message, subscription model.Subscription)
 	if !found {
 		return errors.New("unknown or unconfigured receiver (" + subscription.Receiver + ")")
 	}
+	log.Println("send message to receiver", subscription.Receiver)
 	return rec.Send(message, subscription.AdditionalReceiverInfo)
 }
 

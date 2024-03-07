@@ -26,6 +26,7 @@ import (
 	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver/registry"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -72,16 +73,15 @@ func (this *Receiver) send(pl string) error {
 	}
 	resp, err := http.Post(this.config.SlackWebhookUrl, "application/json", bytes.NewBuffer(b))
 	if err != nil {
+		log.Println("ERROR: ", err)
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 299 {
-		body, err := io.ReadAll(resp.Body)
-		err2 := errors.New("unexpected status code " + strconv.Itoa(resp.StatusCode) + ": " + string(body))
-		if err != nil {
-			return errors.Join(err, err2)
-		}
-		return err2
+		body, _ := io.ReadAll(resp.Body)
+		err = errors.New("unexpected status code " + strconv.Itoa(resp.StatusCode) + ": " + string(body))
+		log.Println("ERROR: ", err)
+		return err
 	}
 	return nil
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
 	"github.com/julienschmidt/httprouter"
+	"log"
 	"net/http"
 )
 
@@ -38,6 +39,7 @@ func MessagesEndpoint(router *httprouter.Router, _ configuration.Config, broker 
 		}
 		err = broker.Message(msg)
 		if err != nil {
+			log.Println("ERROR: ", err)
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}
