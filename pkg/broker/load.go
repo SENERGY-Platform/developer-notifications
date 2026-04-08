@@ -18,10 +18,11 @@ package broker
 
 import (
 	"encoding/json"
-	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
+
+	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
 )
 
 func LoadSubscriptionFiles(dir string) (subscriptions []model.Subscription, err error) {
@@ -46,12 +47,12 @@ func LoadSubscriptionFiles(dir string) (subscriptions []model.Subscription, err 
 			case ".json":
 				temp, err := LoadJson(p)
 				if err != nil {
-					log.Println("WARNING: unable to load", p, err)
+					slog.Warn("unable to load subscription file", "path", p, "error", err)
 					continue
 				}
 				subscriptions = append(subscriptions, temp...)
 			default:
-				log.Println("WARNING: unknown file type in topic-descriptions directory", ext, file.Name())
+				slog.Warn("unknown file type in topic-descriptions directory", "ext", ext, "file", file.Name())
 			}
 		}
 	}
@@ -61,12 +62,12 @@ func LoadSubscriptionFiles(dir string) (subscriptions []model.Subscription, err 
 func LoadJson(location string) (topicDescriptions []model.Subscription, err error) {
 	file, err := os.Open(location)
 	if err != nil {
-		log.Println("error on config load:\n", location, "\n", err)
+		slog.Error("unable to open file", "path", location, "error", err)
 		return topicDescriptions, err
 	}
 	err = json.NewDecoder(file).Decode(&topicDescriptions)
 	if err != nil {
-		log.Println("error on config load:\n", location, "\n", err)
+		slog.Error("unable to decode json", "path", location, "error", err)
 		return topicDescriptions, err
 	}
 	return topicDescriptions, nil

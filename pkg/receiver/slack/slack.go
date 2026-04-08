@@ -22,16 +22,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
-	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
-	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver/registry"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 	"text/template"
+
+	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
+	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
+	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver/registry"
 )
 
 func init() {
@@ -73,14 +73,14 @@ func (this *Receiver) send(pl string) error {
 	}
 	resp, err := http.Post(this.config.SlackWebhookUrl, "application/json", bytes.NewBuffer(b))
 	if err != nil {
-		log.Println("ERROR: ", err)
+		this.config.GetLogger().Error("unable to send slack message", "error", err)
 		return err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode > 299 {
 		body, _ := io.ReadAll(resp.Body)
 		err = errors.New("unexpected status code " + strconv.Itoa(resp.StatusCode) + ": " + string(body))
-		log.Println("ERROR: ", err)
+		this.config.GetLogger().Error("unable to send slack message", "error", err)
 		return err
 	}
 	return nil

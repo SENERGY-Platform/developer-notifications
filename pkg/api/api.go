@@ -18,16 +18,19 @@ package api
 
 import (
 	"context"
-	"github.com/SENERGY-Platform/developer-notifications/pkg/api/util"
-	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
-	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
-	"github.com/julienschmidt/httprouter"
+	"errors"
 	"log"
 	"net/http"
 	"reflect"
 	"runtime"
 	"runtime/debug"
 	"sync"
+
+	"github.com/SENERGY-Platform/developer-notifications/pkg/api/util"
+	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
+	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
+	"github.com/SENERGY-Platform/service-commons/pkg/accesslog"
+	"github.com/julienschmidt/httprouter"
 )
 
 var endpoints []func(*httprouter.Router, configuration.Config, Broker)
@@ -37,27 +40,28 @@ type Broker interface {
 }
 
 func Start(ctx context.Context, wg *sync.WaitGroup, config configuration.Config, broker Broker) error {
-	log.Println("start api")
+	config.GetLogger().Info("start api")
 	router := httprouter.New()
 	for _, e := range endpoints {
-		log.Println("add endpoints: " + runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name())
+		config.GetLogger().Info("add endpoints: " + runtime.FuncForPC(reflect.ValueOf(e).Pointer()).Name())
 		e(router, config, broker)
 	}
-	log.Println("add logging and cors")
+	config.GetLogger().Info("add logging and cors")
 	corsHandler := util.NewCors(router)
-	logger := util.NewLogger(corsHandler)
+	logger := accesslog.New(corsHandler)
 	server := &http.Server{Addr: ":" + config.ApiPort, Handler: logger}
 	go func() {
-		log.Println("listening on ", server.Addr)
-		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		config.GetLogger().Info("listening", "address", server.Addr)
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			debug.PrintStack()
+			config.GetLogger().Error("FATAL", "error", err)
 			log.Fatal("FATAL:", err)
 		}
 	}()
 	wg.Add(1)
 	go func() {
 		<-ctx.Done()
-		log.Println("api shutdown", server.Shutdown(context.Background()))
+		config.GetLogger().Info("api shutdown", "result", server.Shutdown(context.Background()))
 		wg.Done()
 	}()
 	return nil

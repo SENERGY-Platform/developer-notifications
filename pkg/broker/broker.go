@@ -19,13 +19,13 @@ package broker
 import (
 	"context"
 	"errors"
+	"sync"
+	"time"
+
 	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver"
 	"github.com/patrickmn/go-cache"
-	"log"
-	"sync"
-	"time"
 )
 
 func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (broker *Broker, err error) {
@@ -48,7 +48,7 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 
 	for _, sub := range subscriptions {
 		if _, ok := receivers.Get(sub.Receiver); !ok {
-			log.Printf("ignore subscription %v to unknown or unconfigured receiver %v", sub.Key, sub.Receiver)
+			config.GetLogger().Warn("ignoring subscription to unknown or unconfigured receiver", "receiver", sub.Receiver, "subscription", sub.Key)
 		} else {
 			broker.subscriptions = append(broker.subscriptions, sub)
 		}
@@ -90,9 +90,7 @@ func (this *Broker) Message(msg model.Message) error {
 	}
 	wg.Wait()
 	err := errors.Join(errorList...)
-	if this.config.Debug {
-		log.Printf("Message(sender=%v,title=%v,tags=%v) result: matches=%#v distinct=%#v error=%v\n", msg.Sender, msg.Title, msg.Tags, matches, distinct, err)
-	}
+	this.config.GetLogger().Debug("broker message", "error", err, "matches", matches, "sender", msg.Sender, "title", msg.Title, "tags", msg.Tags, "distinct", distinct)
 	return err
 }
 
@@ -101,9 +99,7 @@ func (this *Broker) send(message model.Message, subscription model.Subscription)
 	if !found {
 		return errors.New("unknown or unconfigured receiver (" + subscription.Receiver + ")")
 	}
-	if this.config.Debug {
-		log.Printf("send message to receiver %v\n", subscription.Receiver)
-	}
+	this.config.GetLogger().Debug("send message to receiver", "receiver", subscription.Receiver)
 	return rec.Send(message, subscription.AdditionalReceiverInfo)
 }
 

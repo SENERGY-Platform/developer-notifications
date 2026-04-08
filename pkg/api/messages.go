@@ -18,18 +18,18 @@ package api
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/model"
 	"github.com/julienschmidt/httprouter"
-	"log"
-	"net/http"
 )
 
 func init() {
 	endpoints = append(endpoints, MessagesEndpoint)
 }
 
-func MessagesEndpoint(router *httprouter.Router, _ configuration.Config, broker Broker) {
+func MessagesEndpoint(router *httprouter.Router, config configuration.Config, broker Broker) {
 	router.POST("/messages", func(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
 		msg := model.Message{}
 		err := json.NewDecoder(request.Body).Decode(&msg)
@@ -39,7 +39,7 @@ func MessagesEndpoint(router *httprouter.Router, _ configuration.Config, broker 
 		}
 		err = broker.Message(msg)
 		if err != nil {
-			log.Println("ERROR: ", err)
+			config.GetLogger().Error("unable to handle /messages", "error", err)
 			http.Error(writer, err.Error(), http.StatusInternalServerError)
 			return
 		}

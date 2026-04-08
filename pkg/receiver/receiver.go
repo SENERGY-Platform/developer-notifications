@@ -19,12 +19,12 @@ package receiver
 import (
 	"context"
 	"errors"
+	"sync"
+
 	"github.com/SENERGY-Platform/developer-notifications/pkg/configuration"
 	_ "github.com/SENERGY-Platform/developer-notifications/pkg/receiver/mail"
 	"github.com/SENERGY-Platform/developer-notifications/pkg/receiver/registry"
 	_ "github.com/SENERGY-Platform/developer-notifications/pkg/receiver/slack"
-	"log"
-	"sync"
 )
 
 func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (result *Receivers, err error) {
@@ -32,12 +32,12 @@ func New(ctx context.Context, wg *sync.WaitGroup, config configuration.Config) (
 	for _, f := range registry.ReceiverFactories {
 		name, rec, err := f(ctx, wg, config)
 		if errors.Is(err, registry.ErrNotConfigured) {
-			log.Printf("%v: %v -> skip\n", name, err.Error())
+			config.GetLogger().Warn("skip unconfigured receiver", "name", name, "error", err)
 			continue
 		}
-		log.Printf("init %v receiver", name)
+		config.GetLogger().Info("init receiver", "name", name)
 		if err != nil {
-			log.Println("ERROR:", err)
+			config.GetLogger().Error("unable to init receiver", "error", err)
 			return nil, err
 		}
 		result.reg[name] = rec

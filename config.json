@@ -11,6 +11,8 @@
 
     "subscription_files_dir": "",
 
+    "log_level": "info",
+
     "subscriptions": [
         {
             "key": "default",

@@ -17,7 +17,7 @@
 package model
 
 import (
-	"log"
+	"log/slog"
 	"slices"
 	"time"
 )
@@ -75,7 +75,7 @@ func (this *MessageFilter) Match(message Message) bool {
 	case TagFilter:
 		return slices.Contains(message.Tags, this.Value)
 	default:
-		log.Println("ERROR: unknown filter type")
+		slog.Error("unknown message filter type", "type", this.Type, "value", this.Value)
 		return false
 	}
 }
