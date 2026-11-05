@@ -6,7 +6,7 @@ require github.com/patrickmn/go-cache v2.1.0+incompatible
 
 require (
 	github.com/SENERGY-Platform/go-service-base/struct-logger v0.6.0
-	github.com/SENERGY-Platform/service-commons v0.0.0-20261016083822-dec36fce00ad
+	github.com/SENERGY-Platform/service-commons v0.0.0-20261105091033-c7af74115e58
 	github.com/julienschmidt/httprouter v1.3.0
 )
 
